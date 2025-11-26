@@ -340,70 +340,6 @@
                 opacity: 0;
             }
         }
-
-        .api-setup {
-            background: rgba(255,107,107,0.1);
-            border: 2px solid #FF6B6B;
-            border-radius: 15px;
-            padding: 25px;
-            margin-bottom: 30px;
-            text-align: center;
-        }
-
-        .api-setup h3 {
-            color: #FFE66D;
-            margin-bottom: 15px;
-            font-size: 1.4em;
-        }
-
-        .api-setup input {
-            width: 100%;
-            max-width: 500px;
-            padding: 15px;
-            font-size: 1.1em;
-            background: rgba(0,0,0,0.5);
-            border: 2px solid #FF6B6B;
-            border-radius: 10px;
-            color: white;
-            text-align: center;
-        }
-
-        .api-setup input::placeholder {
-            color: #666;
-        }
-
-        .api-setup button {
-            margin-top: 15px;
-            padding: 12px 30px;
-            font-size: 1.1em;
-            background: linear-gradient(135deg, #FF6B6B 0%, #FFE66D 100%);
-            border: none;
-            border-radius: 10px;
-            color: #000;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        .api-setup button:hover {
-            transform: scale(1.05);
-            box-shadow: 0 5px 20px rgba(255,107,107,0.5);
-        }
-
-        .api-info {
-            margin-top: 15px;
-            color: #888;
-            font-size: 0.95em;
-        }
-
-        .api-info a {
-            color: #FFE66D;
-            text-decoration: none;
-        }
-
-        .api-info a:hover {
-            text-decoration: underline;
-        }
     </style>
 </head>
 <body>
@@ -412,20 +348,9 @@
         <div class="home-page" id="homePage">
             <div class="main-title">🇮🇳</div>
             <div class="subtitle">India News Scraper</div>
-            <div class="description">Top Indian News Channels • Last 12 Hours Updates</div>
+            <div class="description">Top Indian News Channels • Latest India News</div>
             
-            <!-- API Key Setup -->
-            <div class="api-setup" id="apiSetup">
-                <h3>🔑 Enter Your NewsAPI Key</h3>
-                <input type="text" id="apiKeyInput" placeholder="Paste your NewsAPI key here">
-                <button onclick="saveApiKey()">Save API Key</button>
-                <div class="api-info">
-                    Get your FREE API key from <a href="https://newsapi.org" target="_blank">NewsAPI.org</a><br>
-                    (100 requests/day free)
-                </div>
-            </div>
-            
-            <div class="channels-grid" id="channelsGrid" style="display: none;">
+            <div class="channels-grid" id="channelsGrid">
                 <div class="channel-card" onclick="fetchNews('aaj-tak', 'Aaj Tak', '📺')">
                     <div class="channel-icon">📺</div>
                     <div class="channel-name">Aaj Tak</div>
@@ -517,37 +442,8 @@
     <script>
         // 🔑 YOUR API KEY - Built-in
         let API_KEY = 'f2f42aaa969542e6baad4249a7c717d4';
-        
-        // Auto-load channels on page load
-        window.onload = function() {
-            document.getElementById('apiSetup').style.display = 'none';
-            document.getElementById('channelsGrid').style.display = 'grid';
-        };
-
-        function saveApiKey() {
-            const input = document.getElementById('apiKeyInput');
-            const key = input.value.trim();
-            
-            if (!key) {
-                alert('Please enter an API key!');
-                return;
-            }
-            
-            API_KEY = key;
-            localStorage.setItem('newsApiKey', key);
-            
-            document.getElementById('apiSetup').style.display = 'none';
-            document.getElementById('channelsGrid').style.display = 'grid';
-            
-            createCelebration();
-        }
 
         async function fetchNews(sourceId, name, icon) {
-            if (!API_KEY) {
-                alert('Please set your API key first!');
-                return;
-            }
-            
             // Show news page
             document.getElementById('homePage').classList.add('hidden');
             document.getElementById('newsPage').classList.add('active');
@@ -567,17 +463,11 @@
             document.getElementById('headlinesContainer').innerHTML = '';
             
             try {
-                // NewsAPI free tier doesn't have good India coverage
-                // Use "everything" endpoint with India-related keywords
                 const fromDate = twelveHoursAgo.toISOString();
-                
-                // Search for India-related news from major sources
                 let url = `https://newsapi.org/v2/everything?q=India OR Indian OR Delhi OR Mumbai&language=en&sortBy=publishedAt&from=${fromDate}&pageSize=50&apiKey=${API_KEY}`;
                 
                 const response = await fetch(url);
                 const data = await response.json();
-                
-                console.log('Full API Response:', data);
                 
                 if (data.status === 'error') {
                     throw new Error(data.message || data.code || 'API Error');
@@ -588,7 +478,6 @@
                         displayHeadlines(data.articles, false);
                         createCelebration();
                     } else {
-                        // If no results, try without time filter
                         const fallbackUrl = `https://newsapi.org/v2/everything?q=India&language=en&sortBy=publishedAt&pageSize=30&apiKey=${API_KEY}`;
                         const fallbackResponse = await fetch(fallbackUrl);
                         const fallbackData = await fallbackResponse.json();
@@ -600,30 +489,23 @@
                             throw new Error('No articles available');
                         }
                     }
-                } else {
-                    throw new Error('Unexpected API response');
                 }
             } catch (error) {
-                console.error('Full Error:', error);
                 document.getElementById('loading').style.display = 'none';
                 
                 let errorMsg = error.message;
                 let helpText = '';
                 
-                if (errorMsg.includes('apiKeyInvalid')) {
-                    helpText = 'Your API key is invalid. Get a new one from newsapi.org';
-                } else if (errorMsg.includes('rateLimited') || errorMsg.includes('upgradeRequired')) {
-                    helpText = 'Rate limit exceeded (100 requests/day free). Try again tomorrow or upgrade at newsapi.org';
-                } else if (errorMsg.includes('No articles')) {
-                    helpText = 'No news articles found. This might be due to NewsAPI limitations.';
+                if (errorMsg.includes('rateLimited') || errorMsg.includes('upgradeRequired')) {
+                    helpText = 'Rate limit exceeded (100 requests/day). Try again tomorrow.';
                 } else {
-                    helpText = 'Possible issues:<br>• Rate limit (100/day)<br>• Network problem<br>• API service issue';
+                    helpText = 'Unable to fetch news. Please try again later.';
                 }
                 
                 document.getElementById('headlinesContainer').innerHTML = 
                     `<div class="no-headlines">
                         ❌ ${errorMsg}<br><br>
-                        <div style="font-size: 0.85em; color: #FFE66D; line-height: 1.8; max-width: 600px; margin: 0 auto;">
+                        <div style="font-size: 0.85em; color: #FFE66D;">
                             ${helpText}
                         </div>
                     </div>`;
@@ -640,7 +522,6 @@
                 return;
             }
             
-            // Show notice if displaying older articles
             if (showingOlder) {
                 const notice = document.createElement('div');
                 notice.style.cssText = 'background: rgba(255,230,109,0.2); padding: 20px; border-radius: 15px; margin-bottom: 30px; text-align: center; color: #FFE66D; font-size: 1.2em;';
@@ -648,7 +529,6 @@
                 container.appendChild(notice);
             }
             
-            // Filter and display articles
             const validArticles = articles.filter(a => a.title && a.title !== '[Removed]');
             
             validArticles.slice(0, 30).forEach((article, index) => {
