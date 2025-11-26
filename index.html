@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📰 India News Scraper</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #000;
+            min-height: 100vh;
+            color: white;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        /* Home Page */
+        .home-page {
+            display: block;
+        }
+
+        .home-page.hidden {
+            display: none;
+        }
+
+        .main-title {
+            text-align: center;
+            font-size: 5em;
+            margin-bottom: 20px;
+            text-shadow: 0 0 40px rgba(255,107,107,0.5);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { text-shadow: 0 0 40px rgba(255,107,107,0.5); }
+            50% { text-shadow: 0 0 60px rgba(255,107,107,0.8); }
+        }
+
+        .subtitle {
+            text-align: center;
+            font-size: 2.8em;
+            font-weight: 700;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, #FF6B6B 0%, #FFE66D 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .description {
+            text-align: center;
+            font-size: 1.4em;
+            color: #888;
+            margin-bottom: 50px;
+        }
+
+        .channels-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .channel-card {
+            background: linear-gradient(135deg, rgba(255,107,107,0.1) 0%, rgba(255,230,109,0.1) 100%);
+            border: 3px solid #FF6B6B;
+            border-radius: 20px;
+            padding: 30px;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .channel-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255,107,107,0.1), transparent);
+            transform: rotate(45deg);
+            transition: all 0.6s;
+        }
+
+        .channel-card:hover::before {
+            left: 100%;
+        }
+
+        .channel-card:hover {
+            background: linear-gradient(135deg, rgba(255,107,107,0.2) 0%, rgba(255,230,109,0.2) 100%);
+            transform: translateY(-10px) scale(1.05);
+            box-shadow: 0 20px 60px rgba(255,107,107,0.4);
+            border-color: #FFE66D;
+        }
+
+        .channel-icon {
+            font-size: 3.5em;
+            margin-bottom: 15px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .channel-name {
+            font-size: 1.6em;
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: white;
+            position: relative;
+            z-index: 1;
+        }
+
+        .channel-type {
+            font-size: 1em;
+            color: #FFE66D;
+            font-weight: 500;
+            position: relative;
+            z-index: 1;
+        }
+
+        .channel-lang {
+            display: inline-block;
+            margin-top: 8px;
+            padding: 5px 12px;
+            background: rgba(255,230,109,0.2);
+            border-radius: 15px;
+            font-size: 0.85em;
+            color: #FFE66D;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* News Page */
+        .news-page {
+            display: none;
+        }
+
+        .news-page.active {
+            display: block;
+            animation: slideIn 0.5s ease-out;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(50px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .back-btn {
+            background: transparent;
+            border: 3px solid #FF6B6B;
+            color: white;
+            padding: 15px 35px;
+            font-size: 1.3em;
+            border-radius: 12px;
+            cursor: pointer;
+            margin-bottom: 30px;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 600;
+        }
+
+        .back-btn:hover {
+            background: rgba(255,107,107,0.3);
+            transform: translateX(-8px);
+            box-shadow: 0 5px 20px rgba(255,107,107,0.4);
+        }
+
+        .news-header {
+            text-align: center;
+            margin-bottom: 50px;
+            padding: 30px;
+            background: linear-gradient(135deg, rgba(255,107,107,0.1) 0%, rgba(255,230,109,0.1) 100%);
+            border-radius: 20px;
+            border: 2px solid #FF6B6B;
+        }
+
+        .news-channel-icon {
+            font-size: 5em;
+            margin-bottom: 15px;
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .news-channel-name {
+            font-size: 3.5em;
+            font-weight: 700;
+            margin-bottom: 15px;
+            background: linear-gradient(135deg, #FF6B6B 0%, #FFE66D 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .news-time {
+            font-size: 1.4em;
+            color: #FFE66D;
+            font-weight: 500;
+        }
+
+        .loading {
+            text-align: center;
+            font-size: 2.5em;
+            padding: 80px;
+            color: #FF6B6B;
+            animation: pulse 1.5s infinite;
+        }
+
+        .headlines-container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .headline-card {
+            background: linear-gradient(135deg, rgba(255,107,107,0.05) 0%, rgba(255,230,109,0.05) 100%);
+            border-left: 6px solid #FF6B6B;
+            border-radius: 15px;
+            padding: 25px 30px;
+            margin-bottom: 20px;
+            transition: all 0.3s;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .headline-card::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 6px;
+            background: linear-gradient(to bottom, #FF6B6B, #FFE66D);
+            transition: width 0.3s;
+        }
+
+        .headline-card:hover::before {
+            width: 100%;
+            opacity: 0.1;
+        }
+
+        .headline-card:hover {
+            background: linear-gradient(135deg, rgba(255,107,107,0.15) 0%, rgba(255,230,109,0.15) 100%);
+            transform: translateX(15px);
+            box-shadow: -5px 10px 30px rgba(255,107,107,0.3);
+        }
+
+        .headline-number {
+            display: inline-block;
+            background: linear-gradient(135deg, #FF6B6B 0%, #FFE66D 100%);
+            color: #000;
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 45px;
+            font-weight: 700;
+            margin-right: 20px;
+            font-size: 1.2em;
+            box-shadow: 0 4px 15px rgba(255,107,107,0.4);
+        }
+
+        .headline-text {
+            display: inline;
+            font-size: 1.4em;
+            color: white;
+            line-height: 1.7;
+            font-weight: 500;
+        }
+
+        .headline-source {
+            display: block;
+            margin-top: 12px;
+            margin-left: 65px;
+            font-size: 0.95em;
+            color: #FFE66D;
+            font-style: italic;
+        }
+
+        .headline-time {
+            display: inline-block;
+            margin-left: 15px;
+            color: #888;
+            font-size: 0.85em;
+        }
+
+        .no-headlines {
+            text-align: center;
+            font-size: 2.2em;
+            color: #666;
+            padding: 80px 20px;
+        }
+
+        .stats {
+            text-align: center;
+            margin-top: 50px;
+            padding: 30px;
+            background: linear-gradient(135deg, rgba(255,107,107,0.1) 0%, rgba(255,230,109,0.1) 100%);
+            border-radius: 20px;
+            font-size: 1.5em;
+            color: #FFE66D;
+            font-weight: 600;
+            border: 2px solid #FF6B6B;
+        }
+
+        .celebration {
+            position: fixed;
+            font-size: 50px;
+            pointer-events: none;
+            animation: celebrate 2.5s ease-out forwards;
+            z-index: 1000;
+        }
+
+        @keyframes celebrate {
+            0% {
+                transform: translateY(0) rotate(0deg) scale(0);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-90vh) rotate(720deg) scale(1.2);
+                opacity: 0;
+            }
+        }
+
+        .api-setup {
+            background: rgba(255,107,107,0.1);
+            border: 2px solid #FF6B6B;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .api-setup h3 {
+            color: #FFE66D;
+            margin-bottom: 15px;
+            font-size: 1.4em;
+        }
+
+        .api-setup input {
+            width: 100%;
+            max-width: 500px;
+            padding: 15px;
+            font-size: 1.1em;
+            background: rgba(0,0,0,0.5);
+            border: 2px solid #FF6B6B;
+            border-radius: 10px;
+            color: white;
+            text-align: center;
+        }
+
+        .api-setup input::placeholder {
+            color: #666;
+        }
+
+        .api-setup button {
+            margin-top: 15px;
+            padding: 12px 30px;
+            font-size: 1.1em;
+            background: linear-gradient(135deg, #FF6B6B 0%, #FFE66D 100%);
+            border: none;
+            border-radius: 10px;
+            color: #000;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .api-setup button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 20px rgba(255,107,107,0.5);
+        }
+
+        .api-info {
+            margin-top: 15px;
+            color: #888;
+            font-size: 0.95em;
+        }
+
+        .api-info a {
+            color: #FFE66D;
+            text-decoration: none;
+        }
+
+        .api-info a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Home Page -->
+        <div class="home-page" id="homePage">
+            <div class="main-title">🇮🇳</div>
+            <div class="subtitle">India News Scraper</div>
+            <div class="description">Top Indian News Channels • Last 12 Hours Updates</div>
+            
+            <!-- API Key Setup -->
+            <div class="api-setup" id="apiSetup">
+                <h3>🔑 Enter Your NewsAPI Key</h3>
+                <input type="text" id="apiKeyInput" placeholder="Paste your NewsAPI key here">
+                <button onclick="saveApiKey()">Save API Key</button>
+                <div class="api-info">
+                    Get your FREE API key from <a href="https://newsapi.org" target="_blank">NewsAPI.org</a><br>
+                    (100 requests/day free)
+                </div>
+            </div>
+            
+            <div class="channels-grid" id="channelsGrid" style="display: none;">
+                <div class="channel-card" onclick="fetchNews('aaj-tak', 'Aaj Tak', '📺')">
+                    <div class="channel-icon">📺</div>
+                    <div class="channel-name">Aaj Tak</div>
+                    <div class="channel-type">Breaking News</div>
+                    <div class="channel-lang">Hindi</div>
+                </div>
+
+                <div class="channel-card" onclick="fetchNews('ndtv', 'NDTV', '🎯')">
+                    <div class="channel-icon">🎯</div>
+                    <div class="channel-name">NDTV</div>
+                    <div class="channel-type">Trusted News</div>
+                    <div class="channel-lang">English & Hindi</div>
+                </div>
+
+                <div class="channel-card" onclick="fetchNews('the-times-of-india', 'Times of India', '📰')">
+                    <div class="channel-icon">📰</div>
+                    <div class="channel-name">Times of India</div>
+                    <div class="channel-type">Leading Daily</div>
+                    <div class="channel-lang">English</div>
+                </div>
+
+                <div class="channel-card" onclick="fetchNews('zee-news', 'Zee News', '🔴')">
+                    <div class="channel-icon">🔴</div>
+                    <div class="channel-name">Zee News</div>
+                    <div class="channel-type">Hindi News</div>
+                    <div class="channel-lang">Hindi</div>
+                </div>
+
+                <div class="channel-card" onclick="fetchNews('india-today', 'India Today', '⚡')">
+                    <div class="channel-icon">⚡</div>
+                    <div class="channel-name">India Today</div>
+                    <div class="channel-type">Current Affairs</div>
+                    <div class="channel-lang">English</div>
+                </div>
+
+                <div class="channel-card" onclick="fetchNews('republic-tv', 'Republic TV', '🎬')">
+                    <div class="channel-icon">🎬</div>
+                    <div class="channel-name">Republic TV</div>
+                    <div class="channel-type">Debates & Analysis</div>
+                    <div class="channel-lang">English</div>
+                </div>
+
+                <div class="channel-card" onclick="fetchNews('abp-news', 'ABP News', '📡')">
+                    <div class="channel-icon">📡</div>
+                    <div class="channel-name">ABP News</div>
+                    <div class="channel-type">Hindi News</div>
+                    <div class="channel-lang">Hindi</div>
+                </div>
+
+                <div class="channel-card" onclick="fetchNews('news18-india', 'News18 India', '📢')">
+                    <div class="channel-icon">📢</div>
+                    <div class="channel-name">News18 India</div>
+                    <div class="channel-type">Hindi News</div>
+                    <div class="channel-lang">Hindi</div>
+                </div>
+
+                <div class="channel-card" onclick="fetchNews('india-tv', 'India TV', '🎥')">
+                    <div class="channel-icon">🎥</div>
+                    <div class="channel-name">India TV</div>
+                    <div class="channel-type">Hindi News</div>
+                    <div class="channel-lang">Hindi</div>
+                </div>
+
+                <div class="channel-card" onclick="fetchNews('the-hindu', 'The Hindu', '📖')">
+                    <div class="channel-icon">📖</div>
+                    <div class="channel-name">The Hindu</div>
+                    <div class="channel-type">Quality Journalism</div>
+                    <div class="channel-lang">English</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- News Page -->
+        <div class="news-page" id="newsPage">
+            <button class="back-btn" onclick="goBack()">← Back to Channels</button>
+            
+            <div class="news-header">
+                <div class="news-channel-icon" id="newsIcon"></div>
+                <div class="news-channel-name" id="newsChannelName"></div>
+                <div class="news-time" id="newsTime"></div>
+            </div>
+
+            <div class="loading" id="loading">⏳ Fetching Latest Headlines...</div>
+
+            <div class="headlines-container" id="headlinesContainer"></div>
+        </div>
+    </div>
+
+    <script>
+        // 🔑 YOUR API KEY - Built-in
+        let API_KEY = 'f2f42aaa969542e6baad4249a7c717d4';
+        
+        // Auto-load channels on page load
+        window.onload = function() {
+            document.getElementById('apiSetup').style.display = 'none';
+            document.getElementById('channelsGrid').style.display = 'grid';
+        };
+
+        function saveApiKey() {
+            const input = document.getElementById('apiKeyInput');
+            const key = input.value.trim();
+            
+            if (!key) {
+                alert('Please enter an API key!');
+                return;
+            }
+            
+            API_KEY = key;
+            localStorage.setItem('newsApiKey', key);
+            
+            document.getElementById('apiSetup').style.display = 'none';
+            document.getElementById('channelsGrid').style.display = 'grid';
+            
+            createCelebration();
+        }
+
+        async function fetchNews(sourceId, name, icon) {
+            if (!API_KEY) {
+                alert('Please set your API key first!');
+                return;
+            }
+            
+            // Show news page
+            document.getElementById('homePage').classList.add('hidden');
+            document.getElementById('newsPage').classList.add('active');
+            
+            // Update header
+            document.getElementById('newsIcon').textContent = icon;
+            document.getElementById('newsChannelName').textContent = name;
+            
+            const now = new Date();
+            const twelveHoursAgo = new Date(now - 12 * 60 * 60 * 1000);
+            
+            document.getElementById('newsTime').textContent = 
+                `Last 12 Hours • ${now.toLocaleDateString('en-IN')} ${now.toLocaleTimeString('en-IN')}`;
+            
+            // Show loading
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('headlinesContainer').innerHTML = '';
+            
+            try {
+                // NewsAPI free tier doesn't have good India coverage
+                // Use "everything" endpoint with India-related keywords
+                const fromDate = twelveHoursAgo.toISOString();
+                
+                // Search for India-related news from major sources
+                let url = `https://newsapi.org/v2/everything?q=India OR Indian OR Delhi OR Mumbai&language=en&sortBy=publishedAt&from=${fromDate}&pageSize=50&apiKey=${API_KEY}`;
+                
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                console.log('Full API Response:', data);
+                
+                if (data.status === 'error') {
+                    throw new Error(data.message || data.code || 'API Error');
+                }
+                
+                if (data.status === 'ok') {
+                    if (data.articles && data.articles.length > 0) {
+                        displayHeadlines(data.articles, false);
+                        createCelebration();
+                    } else {
+                        // If no results, try without time filter
+                        const fallbackUrl = `https://newsapi.org/v2/everything?q=India&language=en&sortBy=publishedAt&pageSize=30&apiKey=${API_KEY}`;
+                        const fallbackResponse = await fetch(fallbackUrl);
+                        const fallbackData = await fallbackResponse.json();
+                        
+                        if (fallbackData.articles && fallbackData.articles.length > 0) {
+                            displayHeadlines(fallbackData.articles, true);
+                            createCelebration();
+                        } else {
+                            throw new Error('No articles available');
+                        }
+                    }
+                } else {
+                    throw new Error('Unexpected API response');
+                }
+            } catch (error) {
+                console.error('Full Error:', error);
+                document.getElementById('loading').style.display = 'none';
+                
+                let errorMsg = error.message;
+                let helpText = '';
+                
+                if (errorMsg.includes('apiKeyInvalid')) {
+                    helpText = 'Your API key is invalid. Get a new one from newsapi.org';
+                } else if (errorMsg.includes('rateLimited') || errorMsg.includes('upgradeRequired')) {
+                    helpText = 'Rate limit exceeded (100 requests/day free). Try again tomorrow or upgrade at newsapi.org';
+                } else if (errorMsg.includes('No articles')) {
+                    helpText = 'No news articles found. This might be due to NewsAPI limitations.';
+                } else {
+                    helpText = 'Possible issues:<br>• Rate limit (100/day)<br>• Network problem<br>• API service issue';
+                }
+                
+                document.getElementById('headlinesContainer').innerHTML = 
+                    `<div class="no-headlines">
+                        ❌ ${errorMsg}<br><br>
+                        <div style="font-size: 0.85em; color: #FFE66D; line-height: 1.8; max-width: 600px; margin: 0 auto;">
+                            ${helpText}
+                        </div>
+                    </div>`;
+            }
+        }
+
+        function displayHeadlines(articles, showingOlder = false) {
+            document.getElementById('loading').style.display = 'none';
+            
+            const container = document.getElementById('headlinesContainer');
+            
+            if (articles.length === 0) {
+                container.innerHTML = '<div class="no-headlines">😕 No headlines found</div>';
+                return;
+            }
+            
+            // Show notice if displaying older articles
+            if (showingOlder) {
+                const notice = document.createElement('div');
+                notice.style.cssText = 'background: rgba(255,230,109,0.2); padding: 20px; border-radius: 15px; margin-bottom: 30px; text-align: center; color: #FFE66D; font-size: 1.2em;';
+                notice.innerHTML = '⚠️ No articles found in last 12 hours. Showing latest news instead.';
+                container.appendChild(notice);
+            }
+            
+            // Filter and display articles
+            const validArticles = articles.filter(a => a.title && a.title !== '[Removed]');
+            
+            validArticles.slice(0, 30).forEach((article, index) => {
+                const publishedTime = new Date(article.publishedAt);
+                const timeAgo = getTimeAgo(publishedTime);
+                
+                const card = document.createElement('div');
+                card.className = 'headline-card';
+                card.onclick = () => window.open(article.url, '_blank');
+                
+                card.innerHTML = `
+                    <span class="headline-number">${index + 1}</span>
+                    <span class="headline-text">${article.title}</span>
+                    <span class="headline-source">
+                        📰 ${article.source.name}
+                        <span class="headline-time">• ${timeAgo}</span>
+                    </span>
+                `;
+                
+                container.appendChild(card);
+            });
+            
+            const stats = document.createElement('div');
+            stats.className = 'stats';
+            stats.innerHTML = `📊 Total Headlines: ${validArticles.length} • Click any headline to read full article`;
+            container.appendChild(stats);
+        }
+
+        function getTimeAgo(date) {
+            const seconds = Math.floor((new Date() - date) / 1000);
+            
+            if (seconds < 60) return 'Just now';
+            if (seconds < 3600) return `${Math.floor(seconds / 60)} mins ago`;
+            if (seconds < 86400) return `${Math.floor(seconds / 3600)} hours ago`;
+            return `${Math.floor(seconds / 86400)} days ago`;
+        }
+
+        function createCelebration() {
+            const emojis = ['📰', '✨', '⭐', '🌟', '💫', '🎯', '🎊', '🎉'];
+            
+            for (let i = 0; i < 20; i++) {
+                setTimeout(() => {
+                    const celebration = document.createElement('div');
+                    celebration.className = 'celebration';
+                    celebration.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+                    celebration.style.left = `${Math.random() * 100}%`;
+                    celebration.style.bottom = '0';
+                    document.body.appendChild(celebration);
+                    
+                    setTimeout(() => celebration.remove(), 2500);
+                }, i * 80);
+            }
+        }
+
+        function goBack() {
+            document.getElementById('newsPage').classList.remove('active');
+            document.getElementById('homePage').classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>
